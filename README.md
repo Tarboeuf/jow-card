@@ -6,14 +6,12 @@ A custom Home Assistant integration for [Jow](https://www.jow.fr) recipes, and t
 
 ## Installation
 
-Add the repository to HACS **twice**, once per category:
+Add the repository to HACS as an **Integration**:
 
 1. Open HACS in Home Assistant.
 2. Go to **Integrations** → ⋮ → **Custom repositories**.
-3. Add `https://github.com/Tarboeuf/jow-card` with category **Integration**, and install **Jow**.
-4. Go to **Dashboards** (in the HACS sidebar) → ⋮ → **Custom repositories**.
-5. Add `https://github.com/Tarboeuf/jow-card` with category **Dashboard**, and install **Jow Card**.
-6. Restart Home Assistant.
+3. Add `https://github.com/Tarboeuf/jow-card` with category **Integration**, then install **Jow**.
+4. Restart Home Assistant.
 
 ### Integration setup
 
@@ -21,19 +19,19 @@ Go to **Settings → Devices & Services → Add Integration**, search for **Jow*
 
 ### Card usage
 
-Edit a dashboard, add the **Jow Card** manually, with YAML:
+The integration automatically registers the card JavaScript. Add a manual card to your dashboard with YAML:
 
 ```yaml
 type: custom:jow-card
 recipe_url: input_text.jow_recipe_url
 ```
 
-Set the `input_text` value to a Jow share URL, for example `https://app.jow.com/EC0U?action=recipe&recipeId=...`. The card resolves the share URL, fetches its recipe data through the Jow integration, and displays the recipe title, image, description, and a link to the recipe. The Jow integration must be installed and set up.
+Set the `input_text` value to a Jow share URL, for example `https://app.jow.com/EC0U?action=recipe&recipeId=...`. The card resolves the share URL, fetches its recipe data through the Jow integration, and displays the recipe details. Remove any manually added `/local/community/jow-card/jow-card.js` resource to avoid loading the card twice.
 
 ## Repository layout
 
 - `custom_components/jow/` — the integration
-- `jow-card.js` — the Lovelace card
+- `custom_components/jow/frontend/jow-card.js` — the Lovelace card, served and registered by the integration
 
 ## License
 
