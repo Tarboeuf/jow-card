@@ -1,0 +1,10 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Jow",
+        "description": "Set up the Jow integration. This is a dummy setup step for now."
+      }
+    }
+  }
+}

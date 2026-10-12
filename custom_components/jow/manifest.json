@@ -1,0 +1,11 @@
+{
+  "domain": "jow",
+  "name": "Jow",
+  "codeowners": ["@Tarboeuf"],
+  "config_flow": true,
+  "documentation": "https://github.com/Tarboeuf/jow-card",
+  "integration_type": "hub",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/Tarboeuf/jow-card/issues",
+  "version": "0.1.0"
+}
