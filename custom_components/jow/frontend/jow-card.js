@@ -1,32 +1,32 @@
 /** Jow Lovelace card for displaying recipes from Jow share URLs. */
 class JowCard extends HTMLElement {
-    setConfig(config) {
-        this._config = config;
-        this._recipeUrl = undefined;
-        this._recipe = null;
-        this._error = false;
-        this._loading = false;
-        this._requestId = 0;
-        this._servings = 4;
-        this._render();
-    }
+  setConfig(config) {
+    this._config = config;
+    this._recipeUrl = undefined;
+    this._recipe = null;
+    this._error = false;
+    this._loading = false;
+    this._requestId = 0;
+    this._servings = 4;
+    this._render();
+  }
 
-    set hass(hass) {
-        this._hass = hass;
-        this._updateRecipe();
-    }
+  set hass(hass) {
+    this._hass = hass;
+    this._updateRecipe();
+  }
 
-    getCardSize() {
-        return 8;
-    }
+  getCardSize() {
+    return 8;
+  }
 
-    _render() {
-        if (!this._config) return;
+  _render() {
+    if (!this._config) return;
 
-        const card = document.createElement("ha-card");
-        card.className = "jow-recipe-card";
-        const style = document.createElement("style");
-        style.textContent = `
+    const card = document.createElement("ha-card");
+    card.className = "jow-recipe-card";
+    const style = document.createElement("style");
+    style.textContent = `
       .jow-recipe-card {
         --jow-bg: #151c23;
         --jow-panel: #202a33;
@@ -135,7 +135,7 @@ class JowCard extends HTMLElement {
       }
       .jow-recipe-card .jow-columns {
         display: grid;
-        grid-template-columns: minmax(0, .9fr) minmax(0, 1.3fr);
+        grid-template-columns: minmax(0, .6fr) minmax(0, 1.3fr);
         gap: 20px;
       }
       .jow-recipe-card .jow-section-title {
@@ -201,6 +201,8 @@ class JowCard extends HTMLElement {
       }
       .jow-recipe-card .jow-step-text {
         margin: 4px 0 0;
+        font-size: 28px;
+        font-weight: lighter;
       }
       .jow-recipe-card .jow-footer {
         margin-top: 20px;
@@ -233,271 +235,271 @@ class JowCard extends HTMLElement {
         .jow-recipe-card .jow-columns { grid-template-columns: 1fr; }
       }
     `;
-        card.append(style);
+    card.append(style);
 
-        if (!this._recipe) {
-            const state = document.createElement("div");
-            state.className = "jow-state";
-            state.textContent = this._loading
-                ? "Chargement de la recette..."
-                : this._error
-                    ? "Impossible de charger cette recette Jow."
-                    : "Renseignez recipe_url avec un lien de recette Jow.";
-            card.append(state);
-            this.replaceChildren(card);
-            return;
-        }
-
-        const hero = document.createElement("header");
-        hero.className = "jow-hero";
-        if (this._recipe.image_url) {
-            const image = document.createElement("img");
-            image.className = "jow-hero-image";
-            image.src = this._recipe.image_url;
-            image.alt = this._recipe.title;
-            image.loading = "lazy";
-            hero.append(image);
-        }
-
-        const heroContent = document.createElement("div");
-        heroContent.className = "jow-hero-content";
-        heroContent.append(this._element("div", "jow-eyebrow", "Recette Jow"));
-        heroContent.append(this._element("h1", "jow-title", this._recipe.title));
-
-        const chips = document.createElement("div");
-        chips.className = "jow-chips";
-        this._appendChip(chips, "Pr\u00e9paration", this._recipe.preparation_time);
-        this._appendChip(chips, "Cuisson", this._recipe.cooking_time);
-        if (this._recipe.rating != null) {
-            chips.append(
-                this._element(
-                    "span",
-                    "jow-chip",
-                    `Note : ${this._formatRating()} / 5`,
-                ),
-            );
-        }
-        heroContent.append(chips);
-        hero.append(heroContent);
-        card.append(hero);
-
-        const content = document.createElement("div");
-        content.className = "jow-content";
-        const toolbar = document.createElement("div");
-        toolbar.className = "jow-toolbar";
-        if (this._recipe.rating != null) {
-            const rating = document.createElement("div");
-            rating.className = "jow-rating";
-            rating.textContent = `\u2605 ${this._formatRating()} / 5`;
-            toolbar.append(rating);
-        }
-
-        const servings = document.createElement("div");
-        servings.className = "jow-servings";
-        servings.append(this._element("span", "", "Portions"));
-        const minus = this._element("button", "", "\u2212");
-        minus.type = "button";
-        minus.setAttribute("aria-label", "Diminuer le nombre de portions");
-        minus.disabled = this._servings <= 1;
-        minus.addEventListener("click", () => {
-            this._servings = Math.max(1, this._servings - 1);
-            this._render();
-        });
-        servings.append(minus);
-        servings.append(this._element("strong", "jow-servings-count", this._servings));
-        const plus = this._element("button", "", "+");
-        plus.type = "button";
-        plus.setAttribute("aria-label", "Augmenter le nombre de portions");
-        plus.disabled = this._servings >= 12;
-        plus.addEventListener("click", () => {
-            this._servings = Math.min(12, this._servings + 1);
-            this._render();
-        });
-        servings.append(plus);
-        toolbar.append(servings);
-        content.append(toolbar);
-
-        const columns = document.createElement("div");
-        columns.className = "jow-columns";
-        const ingredientsSection = document.createElement("section");
-        ingredientsSection.className = "jow-ingredients";
-        ingredientsSection.append(
-            this._element("h2", "jow-section-title", "Ingr\u00e9dients"),
-        );
-        const ingredientList = document.createElement("div");
-        ingredientList.className = "jow-ingredient-list";
-        for (const ingredient of this._recipe.ingredients || []) {
-            const row = document.createElement("div");
-            row.className = "jow-ingredient";
-            if (ingredient.image_url) {
-                const image = document.createElement("img");
-                image.className = "jow-ingredient-image";
-                image.src = ingredient.image_url;
-                image.alt = "";
-                image.loading = "lazy";
-                image.addEventListener("error", () => image.remove(), { once: true });
-                row.append(image);
-            } else {
-                row.append(this._element("span", "jow-ingredient-image", ""));
-            }
-            const name = document.createElement("div");
-            name.className = "jow-ingredient-name";
-            name.append(document.createTextNode(ingredient.name));
-            if (ingredient.optional) {
-                name.append(this._element("span", "jow-optional", "Facultatif"));
-            }
-            row.append(name);
-            row.append(
-                this._element("div", "jow-quantity", this._formatQuantity(ingredient)),
-            );
-            ingredientList.append(row);
-        }
-        ingredientsSection.append(ingredientList);
-        columns.append(ingredientsSection);
-
-        const stepsSection = document.createElement("section");
-        stepsSection.append(
-            this._element("h2", "jow-section-title", "Pr\u00e9paration"),
-        );
-        const steps = document.createElement("div");
-        steps.className = "jow-steps";
-        for (const [index, stepText] of (this._recipe.steps || []).entries()) {
-            const step = document.createElement("div");
-            step.className = "jow-step";
-            step.append(this._element("div", "jow-step-number", index + 1));
-            step.append(this._element("p", "jow-step-text", stepText));
-            steps.append(step);
-        }
-        stepsSection.append(steps);
-        columns.append(stepsSection);
-        content.append(columns);
-
-        const footer = document.createElement("div");
-        footer.className = "jow-footer";
-        if (this._recipe.calories != null) {
-            this._appendTag(footer, `${this._recipe.calories} kcal`, "par portion");
-        }
-        if (this._recipe.nutri_score) {
-            this._appendTag(footer, `Nutri-score ${this._recipe.nutri_score}`);
-        }
-        if (this._recipe.price_label) {
-            this._appendTag(footer, this._recipe.price_label);
-        }
-        if (this._recipe.tools?.length) {
-            this._appendTag(footer, "Mat\u00e9riel", this._recipe.tools.join(" + "));
-        }
-        content.append(footer);
-
-        if (this._recipe.recipe_url) {
-            const link = this._element("a", "jow-link", "Voir la recette sur Jow");
-            link.href = this._recipe.recipe_url;
-            link.target = "_blank";
-            link.rel = "noopener noreferrer";
-            content.append(link);
-        }
-
-        card.append(content);
-        this.replaceChildren(card);
+    if (!this._recipe) {
+      const state = document.createElement("div");
+      state.className = "jow-state";
+      state.textContent = this._loading
+        ? "Chargement de la recette..."
+        : this._error
+          ? "Impossible de charger cette recette Jow."
+          : "Renseignez recipe_url avec un lien de recette Jow.";
+      card.append(state);
+      this.replaceChildren(card);
+      return;
     }
 
-    _element(tagName, className, text) {
-        const element = document.createElement(tagName);
-        if (className) element.className = className;
-        element.textContent = text;
-        return element;
+    const hero = document.createElement("header");
+    hero.className = "jow-hero";
+    if (this._recipe.image_url) {
+      const image = document.createElement("img");
+      image.className = "jow-hero-image";
+      image.src = this._recipe.image_url;
+      image.alt = this._recipe.title;
+      image.loading = "lazy";
+      hero.append(image);
     }
 
-    _appendChip(container, label, minutes) {
-        if (minutes == null) return;
-        container.append(
-            this._element("span", "jow-chip", `${label} : ${minutes} min`),
-        );
+    const heroContent = document.createElement("div");
+    heroContent.className = "jow-hero-content";
+    heroContent.append(this._element("div", "jow-eyebrow", "Recette Jow"));
+    heroContent.append(this._element("h1", "jow-title", this._recipe.title));
+
+    const chips = document.createElement("div");
+    chips.className = "jow-chips";
+    this._appendChip(chips, "Pr\u00e9paration", this._recipe.preparation_time);
+    this._appendChip(chips, "Cuisson", this._recipe.cooking_time);
+    if (this._recipe.rating != null) {
+      chips.append(
+        this._element(
+          "span",
+          "jow-chip",
+          `Note : ${this._formatRating()} / 5`,
+        ),
+      );
+    }
+    heroContent.append(chips);
+    hero.append(heroContent);
+    card.append(hero);
+
+    const content = document.createElement("div");
+    content.className = "jow-content";
+    const toolbar = document.createElement("div");
+    toolbar.className = "jow-toolbar";
+    if (this._recipe.rating != null) {
+      const rating = document.createElement("div");
+      rating.className = "jow-rating";
+      rating.textContent = `\u2605 ${this._formatRating()} / 5`;
+      toolbar.append(rating);
     }
 
-    _appendTag(container, label, detail = "") {
-        const tag = document.createElement("div");
-        tag.className = "jow-tag";
-        tag.append(this._element("strong", "", label));
-        if (detail) tag.append(document.createTextNode(` ${detail}`));
-        container.append(tag);
+    const servings = document.createElement("div");
+    servings.className = "jow-servings";
+    servings.append(this._element("span", "", "Portions"));
+    const minus = this._element("button", "", "\u2212");
+    minus.type = "button";
+    minus.setAttribute("aria-label", "Diminuer le nombre de portions");
+    minus.disabled = this._servings <= 1;
+    minus.addEventListener("click", () => {
+      this._servings = Math.max(1, this._servings - 1);
+      this._render();
+    });
+    servings.append(minus);
+    servings.append(this._element("strong", "jow-servings-count", this._servings));
+    const plus = this._element("button", "", "+");
+    plus.type = "button";
+    plus.setAttribute("aria-label", "Augmenter le nombre de portions");
+    plus.disabled = this._servings >= 12;
+    plus.addEventListener("click", () => {
+      this._servings = Math.min(12, this._servings + 1);
+      this._render();
+    });
+    servings.append(plus);
+    toolbar.append(servings);
+    content.append(toolbar);
+
+    const columns = document.createElement("div");
+    columns.className = "jow-columns";
+    const ingredientsSection = document.createElement("section");
+    ingredientsSection.className = "jow-ingredients";
+    ingredientsSection.append(
+      this._element("h2", "jow-section-title", "Ingr\u00e9dients"),
+    );
+    const ingredientList = document.createElement("div");
+    ingredientList.className = "jow-ingredient-list";
+    for (const ingredient of this._recipe.ingredients || []) {
+      const row = document.createElement("div");
+      row.className = "jow-ingredient";
+      if (ingredient.image_url) {
+        const image = document.createElement("img");
+        image.className = "jow-ingredient-image";
+        image.src = ingredient.image_url;
+        image.alt = "";
+        image.loading = "lazy";
+        image.addEventListener("error", () => image.remove(), { once: true });
+        row.append(image);
+      } else {
+        row.append(this._element("span", "jow-ingredient-image", ""));
+      }
+      const name = document.createElement("div");
+      name.className = "jow-ingredient-name";
+      name.append(document.createTextNode(ingredient.name));
+      if (ingredient.optional) {
+        name.append(this._element("span", "jow-optional", "Facultatif"));
+      }
+      row.append(name);
+      row.append(
+        this._element("div", "jow-quantity", this._formatQuantity(ingredient)),
+      );
+      ingredientList.append(row);
+    }
+    ingredientsSection.append(ingredientList);
+    columns.append(ingredientsSection);
+
+    const stepsSection = document.createElement("section");
+    stepsSection.append(
+      this._element("h2", "jow-section-title", "Pr\u00e9paration"),
+    );
+    const steps = document.createElement("div");
+    steps.className = "jow-steps";
+    for (const [index, stepText] of (this._recipe.steps || []).entries()) {
+      const step = document.createElement("div");
+      step.className = "jow-step";
+      step.append(this._element("div", "jow-step-number", index + 1));
+      step.append(this._element("p", "jow-step-text", stepText));
+      steps.append(step);
+    }
+    stepsSection.append(steps);
+    columns.append(stepsSection);
+    content.append(columns);
+
+    const footer = document.createElement("div");
+    footer.className = "jow-footer";
+    if (this._recipe.calories != null) {
+      this._appendTag(footer, `${this._recipe.calories} kcal`, "par portion");
+    }
+    if (this._recipe.nutri_score) {
+      this._appendTag(footer, `Nutri-score ${this._recipe.nutri_score}`);
+    }
+    if (this._recipe.price_label) {
+      this._appendTag(footer, this._recipe.price_label);
+    }
+    if (this._recipe.tools?.length) {
+      this._appendTag(footer, "Mat\u00e9riel", this._recipe.tools.join(" + "));
+    }
+    content.append(footer);
+
+    if (this._recipe.recipe_url) {
+      const link = this._element("a", "jow-link", "Voir la recette sur Jow");
+      link.href = this._recipe.recipe_url;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      content.append(link);
     }
 
-    _formatRating() {
-        return new Intl.NumberFormat("fr-FR", {
-            minimumFractionDigits: 1,
-            maximumFractionDigits: 1,
-        }).format(this._recipe.rating * 5);
-    }
+    card.append(content);
+    this.replaceChildren(card);
+  }
 
-    _formatQuantity(ingredient) {
-        const amount = Number(ingredient.quantity_per_cover) * this._servings;
-        const rules = ingredient.abbreviations || [];
-        const rule =
-            rules.find(
-                (candidate) =>
-                    amount >= (candidate.minAmount ?? 0) &&
-                    (candidate.maxAmount == null || amount < candidate.maxAmount),
-            ) || rules.at(-1);
-        const divisor = rule?.divisor || 1;
-        const value = rule?.inverse ? amount / divisor : amount * divisor;
-        const digits = rule?.digits ?? 2;
-        const quantity = new Intl.NumberFormat("fr-FR", {
-            maximumFractionDigits: rule?.inverse ? Math.max(digits, 2) : digits,
-        }).format(value);
-        const unit = rule?.label?.trim() || ingredient.unit_name?.toLowerCase() || "";
-        return `${quantity}${unit ? ` ${unit}` : ""}`;
-    }
+  _element(tagName, className, text) {
+    const element = document.createElement(tagName);
+    if (className) element.className = className;
+    element.textContent = text;
+    return element;
+  }
 
-    _updateRecipe() {
-        if (!this._config || !this._hass) return;
+  _appendChip(container, label, minutes) {
+    if (minutes == null) return;
+    container.append(
+      this._element("span", "jow-chip", `${label} : ${minutes} min`),
+    );
+  }
 
-        const configuredRecipeUrl = this._config.recipe_url;
-        const isEntityId =
-            typeof configuredRecipeUrl === "string" &&
-            /^[a-z0-9_]+\.[a-z0-9_]+$/i.test(configuredRecipeUrl);
-        const recipeUrl = isEntityId
-            ? this._hass.states[configuredRecipeUrl]?.state
-            : configuredRecipeUrl;
+  _appendTag(container, label, detail = "") {
+    const tag = document.createElement("div");
+    tag.className = "jow-tag";
+    tag.append(this._element("strong", "", label));
+    if (detail) tag.append(document.createTextNode(` ${detail}`));
+    container.append(tag);
+  }
 
-        if (recipeUrl === this._recipeUrl) return;
-        this._recipeUrl = recipeUrl;
-        const requestId = ++this._requestId;
-        this._recipe = null;
-        this._error = false;
-        this._loading = Boolean(
-            recipeUrl && recipeUrl !== "unknown" && recipeUrl !== "unavailable",
-        );
+  _formatRating() {
+    return new Intl.NumberFormat("fr-FR", {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
+    }).format(this._recipe.rating * 5);
+  }
+
+  _formatQuantity(ingredient) {
+    const amount = Number(ingredient.quantity_per_cover) * this._servings;
+    const rules = ingredient.abbreviations || [];
+    const rule =
+      rules.find(
+        (candidate) =>
+          amount >= (candidate.minAmount ?? 0) &&
+          (candidate.maxAmount == null || amount < candidate.maxAmount),
+      ) || rules.at(-1);
+    const divisor = rule?.divisor || 1;
+    const value = rule?.inverse ? amount / divisor : amount * divisor;
+    const digits = rule?.digits ?? 2;
+    const quantity = new Intl.NumberFormat("fr-FR", {
+      maximumFractionDigits: rule?.inverse ? Math.max(digits, 2) : digits,
+    }).format(value);
+    const unit = rule?.label?.trim() || ingredient.unit_name?.toLowerCase() || "";
+    return `${quantity}${unit ? ` ${unit}` : ""}`;
+  }
+
+  _updateRecipe() {
+    if (!this._config || !this._hass) return;
+
+    const configuredRecipeUrl = this._config.recipe_url;
+    const isEntityId =
+      typeof configuredRecipeUrl === "string" &&
+      /^[a-z0-9_]+\.[a-z0-9_]+$/i.test(configuredRecipeUrl);
+    const recipeUrl = isEntityId
+      ? this._hass.states[configuredRecipeUrl]?.state
+      : configuredRecipeUrl;
+
+    if (recipeUrl === this._recipeUrl) return;
+    this._recipeUrl = recipeUrl;
+    const requestId = ++this._requestId;
+    this._recipe = null;
+    this._error = false;
+    this._loading = Boolean(
+      recipeUrl && recipeUrl !== "unknown" && recipeUrl !== "unavailable",
+    );
+    this._render();
+
+    if (!this._loading) return;
+
+    this._hass
+      .callWS({ type: "jow/recipe", recipe_url: recipeUrl })
+      .then((recipe) => {
+        if (requestId !== this._requestId) return;
+        this._recipe = recipe;
+        this._loading = false;
         this._render();
-
-        if (!this._loading) return;
-
-        this._hass
-            .callWS({ type: "jow/recipe", recipe_url: recipeUrl })
-            .then((recipe) => {
-                if (requestId !== this._requestId) return;
-                this._recipe = recipe;
-                this._loading = false;
-                this._render();
-            })
-            .catch(() => {
-                if (requestId !== this._requestId) return;
-                this._error = true;
-                this._loading = false;
-                this._render();
-            });
-    }
+      })
+      .catch(() => {
+        if (requestId !== this._requestId) return;
+        this._error = true;
+        this._loading = false;
+        this._render();
+      });
+  }
 }
 
 if (!customElements.get("jow-card")) {
-    customElements.define("jow-card", JowCard);
+  customElements.define("jow-card", JowCard);
 }
 
 window.customCards = window.customCards || [];
 if (!window.customCards.some((card) => card.type === "jow-card")) {
-    window.customCards.push({
-        type: "jow-card",
-        name: "Jow Card",
-        preview: false,
-        description: "Load a recipe from a Jow share URL.",
-    });
+  window.customCards.push({
+    type: "jow-card",
+    name: "Jow Card",
+    preview: false,
+    description: "Load a recipe from a Jow share URL.",
+  });
 }
